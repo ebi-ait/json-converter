@@ -1,3 +1,12 @@
+# Installation
+```
+pip install json-converter
+```
+# Usage
+```
+from json_converter.json_mapper import JsonMapper
+```
+
 # JSON Mapping
 
 The `JsonMapper` class is a tool for translating/converting a JSON document into another JSON document with a 
@@ -339,7 +348,9 @@ For example:
         ]]
         
 #### Convenience Methods
- 
+```
+from json_converter.json_mapper import json_object, json_array
+```
 For convenience, the `json_mapper` module makes available 2 helper methods that allow easy inclusion of JSON 
 predefined JSON nodes into the specification. These are `json_object` for JSON objects, and `json_array` for 
 JSON arrays. `json_object` expects a dictionary-like structure as an input. 
