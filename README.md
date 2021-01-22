@@ -1,3 +1,12 @@
+# Installation
+```
+pip install json-converter
+```
+# Usage
+```
+from json_converter.json_mapper import JsonMapper
+```
+
 # JSON Mapping
 
 The `JsonMapper` class is a tool for translating/converting a JSON document into another JSON document with a 
@@ -310,24 +319,24 @@ structure. However, `JsonMapper` also provides support for including literals in
 
 As mentioned above, there are 2 types of node that can be used for adding predefined values into the specification, 
 which are object, and array. To specify a JSON object literal as field value in the resulting JSON document, the
-`$json_object` keyword is used with a dictionary-like structure:
+`$object` keyword is used with a dictionary-like structure:
 
-        <field_name>: ['$json_object', <json_object_value>]
+        <field_name>: ['$object', <object_value>]
 
 For example:
 
-        'metadata': ['$json_object', {
+        'metadata': ['$object', {
             'date_created': '2020-03-13',
             'author': 'Jane Doe'
         }]
         
-For collections or list of JSON objects, the `'$json_array'` is used instead:
+For collections or list of JSON objects, the `'$array'` is used instead:
 
-        <field_name>: ['$json_array': <json_object_list>]
+        <field_name>: ['$array': <list>]
         
 For example:
 
-        'authors': ['$json_array', [
+        'authors': ['$array', [
             {
                 'name': 'Peter Z',
                 'institution': 'Some University'
@@ -339,7 +348,9 @@ For example:
         ]]
         
 #### Convenience Methods
- 
+```
+from json_converter.json_mapper import json_object, json_array
+```
 For convenience, the `json_mapper` module makes available 2 helper methods that allow easy inclusion of JSON 
 predefined JSON nodes into the specification. These are `json_object` for JSON objects, and `json_array` for 
 JSON arrays. `json_object` expects a dictionary-like structure as an input. 
