@@ -23,3 +23,17 @@ def default_to(*args):
     value = args[0]
     default_value = args[1]
     return default_value if value is None else value
+
+
+manager = {}
+
+
+def register_post_process(func):
+    manager[func.__name__] = func
+
+
+register_post_process(prefix_with)
+register_post_process(format_date)
+register_post_process(concatenate_list)
+register_post_process(default_to)
+

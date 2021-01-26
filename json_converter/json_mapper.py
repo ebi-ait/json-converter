@@ -1,6 +1,7 @@
 from collections import Mapping
 
 from .data_node import DataNode
+from .post_process import manager
 
 KEYWORD_MARKER = '$'
 
@@ -108,11 +109,17 @@ class JsonMapper:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
             if has_customisation:
-                operation = spec[1]
+                operation = JsonMapper.get_post_process_func(spec[1])
                 args = [field_value]
                 args.extend(spec[2:])
                 field_value = operation(*args)
         return field_value
+
+    @staticmethod
+    def get_post_process_func(func):
+        if callable(func):
+            return func
+        return manager[func]
 
     @staticmethod
     def _get_object_literal(spec):
