@@ -90,6 +90,9 @@ with the post-processor defined as:
             age = args[0]
             return age >= 18
             
+After you register processor function to the manager(check `post_process.py:manager`), 
+you can use the function literal name as the `post_processor` arg. 
+
 At the time of writing, there are a few built-in post-processors that can be applied to some common use-cases like
 defaulting values (`default_to`), concatenating lists (`concatenate_list`), etc. These can be found in 
 `post_process.py` module.
