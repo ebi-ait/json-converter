@@ -115,23 +115,23 @@ class JsonMapper:
 
     def _get_object_literal(self, spec):
         if len(spec) < 2 or len(spec) > 3:
-            raise UnreadableSpecification('Expecting exactly 1 JSON literal value.')
+            raise UnreadableSpecification(f'The {spec[0]} spec can  either have 1 or 2 parameters.')
 
         field_value = spec[1]
 
         if not (isinstance(field_value, Mapping) or isinstance(field_value, list)):
             raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
 
-        recursive = spec[2] if len(spec) == 3 else False
+        contains_spec = spec[2] if len(spec) == 3 else False
 
         if len(field_value) == 0:
             field_value = None
 
-        if recursive and isinstance(field_value, list):
+        if contains_spec and isinstance(field_value, list):
             for i, item in enumerate(field_value):
                 field_value[i] = self.map(item)
 
-        if recursive and isinstance(field_value, Mapping):
+        if contains_spec and isinstance(field_value, Mapping):
             field_value = self.map(field_value)
 
         return field_value

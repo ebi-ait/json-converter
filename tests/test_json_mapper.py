@@ -3,6 +3,7 @@ from string import Template
 from unittest import TestCase
 
 from json_converter.json_mapper import JsonMapper, InvalidNode, UnreadableSpecification
+from json_converter.post_process import default_to
 
 
 class JsonMapperTest(TestCase):
@@ -484,7 +485,8 @@ class JsonMapperTest(TestCase):
         # when:
         values = [
             {
-                'new_key': ['from_key']
+                'name': ['', default_to, 'name'],
+                'value': ['from_key']
             }
         ]
         result = json_mapper.map({
@@ -494,7 +496,8 @@ class JsonMapperTest(TestCase):
 
         expected_value = [
             {
-                'new_key': 'from_value'
+                'name': 'name',
+                'value': 'from_value'
             }
         ]
 
