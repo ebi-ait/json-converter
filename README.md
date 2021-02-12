@@ -420,7 +420,7 @@ values = [
         ]
 
 result = json_mapper.map({
-            'metadata': ['$array', values, True]
+            'attributes': ['$array', values, True]
         })
 
 ```
