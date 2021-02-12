@@ -99,11 +99,10 @@ class JsonMapper:
             passing = bool(do_filter(*filter_args))
         return passing
 
-    @staticmethod
-    def _apply_field_spec(node: DataNode, spec: list):
+    def _apply_field_spec(self, node: DataNode, spec: list):
         source_field_name = spec[0]
         if source_field_name in [SPEC_OBJECT_LITERAL, SPEC_ARRAY_LITERAL]:
-            field_value = JsonMapper._get_object_literal(spec)
+            field_value = self._get_object_literal(spec)
         else:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
@@ -114,15 +113,27 @@ class JsonMapper:
                 field_value = operation(*args)
         return field_value
 
-    @staticmethod
-    def _get_object_literal(spec):
-        if len(spec) != 2:
-            raise UnreadableSpecification('Expecting exactly 1 JSON literal value.')
+    def _get_object_literal(self, spec):
+        if len(spec) < 2 or len(spec) > 3:
+            raise UnreadableSpecification(f'The {spec[0]} spec can  either have 1 or 2 parameters.')
+
         field_value = spec[1]
+
         if not (isinstance(field_value, Mapping) or isinstance(field_value, list)):
             raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
+
+        contains_spec = spec[2] if len(spec) == 3 else False
+
         if len(field_value) == 0:
             field_value = None
+
+        if contains_spec and isinstance(field_value, list):
+            for i, item in enumerate(field_value):
+                field_value[i] = self.map(item)
+
+        if contains_spec and isinstance(field_value, Mapping):
+            field_value = self.map(field_value)
+
         return field_value
 
 

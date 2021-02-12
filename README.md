@@ -346,7 +346,8 @@ For example:
                 'institution': 'Some Research Institute'
             }
         ]]
-        
+
+
 #### Convenience Methods
 ```
 from json_converter.json_mapper import json_object, json_array
@@ -377,3 +378,70 @@ The `json_array` method treats argument list as a list of JSON objects. For exam
         
  Note that any list literal provided within the `json_array` method is treated as a single object. For instance, the
  call `json_array([{'object_id': 123}, {'object_id': 456}])` has *one* item in the resulting list of list.
+ 
+
+#### More complex objects inside $array and $object
+
+The object inside the $array or $object spec can now have values which can be sourced from the source object if the third boolean parameter boolean (`contains_spec`) is set to True
+
+Given the following source object:
+```
+source_object = {
+                    'name': 'Peter Z',
+                    'institution': 'Some University',
+                    'address': 'Some place'
+                }
+```
+
+Using the mapping:
+
+```
+from json_converter.json_mapper import JsonMapper
+from json_converter.post_process import default_to
+
+json_mapper = JsonMapper(source_object)
+
+values = [
+            {
+                'key': ['', default_to, 'name'],
+                'value': ['name']
+
+            },
+            {
+                'key': ['', default_to, 'institution'],
+                'value': ['institution']
+
+            },
+            {
+                'key': ['', default_to, 'address'],
+                'value': ['address']
+
+            },
+        ]
+
+result = json_mapper.map({
+            'attributes': ['$array', values, True]
+        })
+
+```
+
+
+```
+# result contains
+{
+    'attributes':[
+        {
+            'key': 'name',
+            'value': 'Peter Z'
+        },
+        {
+            'key': 'institution',
+            'value': 'Some University'
+        },
+        {
+            'key': 'address',
+            'value': 'Some place'
+        }
+    ]
+}
+```

@@ -3,6 +3,7 @@ from string import Template
 from unittest import TestCase
 
 from json_converter.json_mapper import JsonMapper, InvalidNode, UnreadableSpecification
+from json_converter.post_process import default_to
 
 
 class JsonMapperTest(TestCase):
@@ -417,6 +418,33 @@ class JsonMapperTest(TestCase):
         self.assertEqual(metadata, result.get('metadata'))
         self.assertFalse('empty' in result.keys())
 
+    def test_map_with_object_with_spec(self):
+        # given:
+        json_mapper = JsonMapper({
+            'from_key': 'from_value'
+        })
+
+        # when:
+        values = {
+            'obj_with_spec': {
+                'new_key': ['from_key']
+            }
+        }
+        result = json_mapper.map({
+            'metadata': ['$object', values, True],
+            'empty': ['$object', {}]
+        })
+
+        expected_value = {
+            'obj_with_spec': {
+                'new_key': 'from_value'
+            }
+        }
+
+        # then:
+        self.assertEqual(expected_value, result.get('metadata'))
+        self.assertFalse('empty' in result.keys())
+
     def test_map_with_invalid_object_literal(self):
         # given:
         json_mapper = JsonMapper({})
@@ -446,4 +474,33 @@ class JsonMapperTest(TestCase):
 
         # then:
         self.assertEqual(values, result.get('metadata'))
+        self.assertFalse('empty' in result.keys())
+
+    def test_map_with_array_object_with_spec(self):
+        # given:
+        json_mapper = JsonMapper({
+            'from_key': 'from_value'
+        })
+
+        # when:
+        values = [
+            {
+                'name': ['', default_to, 'name'],
+                'value': ['from_key']
+            }
+        ]
+        result = json_mapper.map({
+            'metadata': ['$array', values, True],
+            'empty': ['$array', []]
+        })
+
+        expected_value = [
+            {
+                'name': 'name',
+                'value': 'from_value'
+            }
+        ]
+
+        # then:
+        self.assertEqual(expected_value, result.get('metadata'))
         self.assertFalse('empty' in result.keys())
