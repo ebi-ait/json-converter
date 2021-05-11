@@ -1,3 +1,4 @@
+import copy
 from collections import Mapping
 
 from .data_node import DataNode
@@ -26,6 +27,7 @@ class JsonMapper:
 
     def map(self, using={}, on=''):
         spec = using
+        orig_spec = copy.deepcopy(using)
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
         node = self.root_node if not anchor else self._anchor_node(anchor)
@@ -37,13 +39,30 @@ class JsonMapper:
                 mapping = self._apply_node_spec(item, anchor, spec)
                 if len(mapping) > 0:
                     result.append(mapping)
+                spec = copy.deepcopy(orig_spec)
         else:
             result = self._apply_node_spec(node, anchor, spec)
         return result
 
+    def map_array(self, node, using={}, on=''):
+        spec = using
+        orig_spec = copy.deepcopy(using)
+        self._check_if_readable(spec)
+        anchor = self._determine_anchor(on, spec)
+        if isinstance(node, list):
+            result = []
+            for item in node:
+                mapping = self._apply_node_spec(item, anchor, spec)
+                if len(mapping) > 0:
+                    result.append(mapping)
+                spec = copy.deepcopy(orig_spec)
+        else:
+            result = self._apply_node_spec(node, anchor, spec)
+        return result[0] if isinstance(result, list) else result
+
     @staticmethod
     def _check_if_readable(spec):
-        if not ((isinstance(spec, list) or isinstance(spec, dict)) and len(spec) > 0):
+        if not (isinstance(spec, (list, dict)) and len(spec) > 0):
             raise UnreadableSpecification
 
     @staticmethod
@@ -101,8 +120,10 @@ class JsonMapper:
 
     def _apply_field_spec(self, node: DataNode, spec: list):
         source_field_name = spec[0]
-        if source_field_name in [SPEC_OBJECT_LITERAL, SPEC_ARRAY_LITERAL]:
+        if source_field_name == SPEC_OBJECT_LITERAL:
             field_value = self._get_object_literal(spec)
+        elif source_field_name == SPEC_ARRAY_LITERAL:
+            field_value = self._get_array_literal(spec, node)
         else:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
@@ -114,13 +135,7 @@ class JsonMapper:
         return field_value
 
     def _get_object_literal(self, spec):
-        if len(spec) < 2 or len(spec) > 3:
-            raise UnreadableSpecification(f'The {spec[0]} spec can  either have 1 or 2 parameters.')
-
-        field_value = spec[1]
-
-        if not (isinstance(field_value, Mapping) or isinstance(field_value, list)):
-            raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
+        field_value = self.__get_field_value(spec)
 
         contains_spec = spec[2] if len(spec) == 3 else False
 
@@ -136,15 +151,44 @@ class JsonMapper:
 
         return field_value
 
+    def _get_array_literal(self, spec, node):
+        field_value = self.__get_field_value(spec)
+
+        contains_spec = spec[2] if len(spec) == 3 else False
+
+        if len(field_value) == 0:
+            field_value = None
+
+        if contains_spec and isinstance(field_value, list):
+            for i, item in enumerate(field_value):
+                field_value[i] = self.map_array(node, item)
+
+        if contains_spec and isinstance(field_value, Mapping):
+            field_value = self.map(field_value)
+
+        return field_value
+
+    @staticmethod
+    def __get_field_value(spec):
+        if len(spec) < 2 or len(spec) > 3:
+            raise UnreadableSpecification(f'The {spec[0]} spec can  either have 1 or 2 parameters.')
+
+        field_value = spec[1]
+
+        if not (isinstance(field_value, (Mapping, list))):
+            raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
+
+        return field_value
+
 
 class InvalidNode(Exception):
 
     def __init__(self, field):
-        super(InvalidNode, self).__init__(f'Invalid node [{field}].')
+        super().__init__(f'Invalid node [{field}].')
         self.field = field
 
 
 class UnreadableSpecification(Exception):
 
     def __init__(self, details=''):
-        super(UnreadableSpecification, self).__init__(f'Provided specification is unreadable. {details}')
+        super().__init__(f'Provided specification is unreadable. {details}')
