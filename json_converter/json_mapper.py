@@ -25,30 +25,19 @@ class JsonMapper:
     def __init__(self, source: dict):
         self.root_node = DataNode(source)
 
-    def map(self, using={}, on=''):
+    def map(self, using={}, on='', node=None):
+        is_array = False
         spec = using
         orig_spec = copy.deepcopy(using)
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
-        node = self.root_node if not anchor else self._anchor_node(anchor)
+        if node is None:
+            node = self.root_node if not anchor else self._anchor_node(anchor)
+        else:
+            is_array = True
         if node is None:
             return node
-        elif isinstance(node, list):
-            result = []
-            for item in node:
-                mapping = self._apply_node_spec(item, anchor, spec)
-                if len(mapping) > 0:
-                    result.append(mapping)
-                spec = copy.deepcopy(orig_spec)
-        else:
-            result = self._apply_node_spec(node, anchor, spec)
-        return result
 
-    def map_array(self, node, using={}, on=''):
-        spec = using
-        orig_spec = copy.deepcopy(using)
-        self._check_if_readable(spec)
-        anchor = self._determine_anchor(on, spec)
         if isinstance(node, list):
             result = []
             for item in node:
@@ -58,7 +47,11 @@ class JsonMapper:
                 spec = copy.deepcopy(orig_spec)
         else:
             result = self._apply_node_spec(node, anchor, spec)
-        return result[0] if isinstance(result, list) else result
+
+        if is_array:
+            return result[0] if isinstance(result, list) else result
+
+        return result
 
     @staticmethod
     def _check_if_readable(spec):
@@ -78,13 +71,15 @@ class JsonMapper:
             # check if anchored_node is dict-like
             if anchored_node is None:
                 return anchored_node
-            elif isinstance(anchored_node, Mapping):
+
+            if isinstance(anchored_node, Mapping):
                 return DataNode(anchored_node)
+
             # or if anchored_node is actually a list
-            elif isinstance(anchored_node, list):
+            if isinstance(anchored_node, list):
                 return [DataNode(node) for node in anchored_node]
-            else:
-                raise InvalidNode(field)
+
+            raise InvalidNode(field)
 
     def _apply_node_spec(self, node: DataNode, anchor: str, spec: dict):
         filter_spec = spec.get(SPEC_FILTER)
@@ -121,9 +116,9 @@ class JsonMapper:
     def _apply_field_spec(self, node: DataNode, spec: list):
         source_field_name = spec[0]
         if source_field_name == SPEC_OBJECT_LITERAL:
-            field_value = self._get_object_literal(spec)
+            field_value = self._get_object_or_array_literal(spec)
         elif source_field_name == SPEC_ARRAY_LITERAL:
-            field_value = self._get_array_literal(spec, node)
+            field_value = self._get_object_or_array_literal(spec, node)
         else:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
@@ -134,26 +129,12 @@ class JsonMapper:
                 field_value = operation(*args)
         return field_value
 
-    def _get_object_literal(self, spec):
-        field_value = self.__get_field_value(spec)
-
-        contains_spec = spec[2] if len(spec) == 3 else False
-
-        if len(field_value) == 0:
-            field_value = None
-
-        if contains_spec and isinstance(field_value, list):
-            for i, item in enumerate(field_value):
-                field_value[i] = self.map(item)
-
-        if contains_spec and isinstance(field_value, Mapping):
-            field_value = self.map(field_value)
+    def _get_object_or_array_literal(self, spec, node=None):
+        field_value = self.__recalculate_field_value(self.__get_field_value(spec), spec, node)
 
         return field_value
 
-    def _get_array_literal(self, spec, node):
-        field_value = self.__get_field_value(spec)
-
+    def __recalculate_field_value(self, field_value, spec, node=None):
         contains_spec = spec[2] if len(spec) == 3 else False
 
         if len(field_value) == 0:
@@ -161,7 +142,10 @@ class JsonMapper:
 
         if contains_spec and isinstance(field_value, list):
             for i, item in enumerate(field_value):
-                field_value[i] = self.map_array(node, item)
+                if node is not None:
+                    field_value[i] = self.map(item, '', node)
+                else:
+                    field_value[i] = self.map(item)
 
         if contains_spec and isinstance(field_value, Mapping):
             field_value = self.map(field_value)
@@ -175,7 +159,7 @@ class JsonMapper:
 
         field_value = spec[1]
 
-        if not (isinstance(field_value, (Mapping, list))):
+        if not isinstance(field_value, (Mapping, list)):
             raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
 
         return field_value
