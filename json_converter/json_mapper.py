@@ -30,7 +30,8 @@ class JsonMapper:
         orig_spec = copy.deepcopy(using)
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
-        if node is None:
+
+        if not is_array:
             node = self.root_node if not anchor else self._anchor_node(anchor)
             if node is None:
                 return node
@@ -127,11 +128,8 @@ class JsonMapper:
         return field_value
 
     def _get_object_or_array_literal(self, spec, node=None, is_array=False):
-        field_value = self.__recalculate_field_value(self.__get_field_value(spec), spec, node, is_array)
+        field_value = self.__get_field_value(spec)
 
-        return field_value
-
-    def __recalculate_field_value(self, field_value, spec, node, is_array):
         contains_spec = spec[2] if len(spec) == 3 else False
 
         if len(field_value) == 0:
