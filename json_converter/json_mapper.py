@@ -25,18 +25,15 @@ class JsonMapper:
     def __init__(self, source: dict):
         self.root_node = DataNode(source)
 
-    def map(self, using={}, on='', node=None):
-        is_array = False
+    def map(self, using={}, on='', node=None, is_array=False):
         spec = using
         orig_spec = copy.deepcopy(using)
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
         if node is None:
             node = self.root_node if not anchor else self._anchor_node(anchor)
-        else:
-            is_array = True
-        if node is None:
-            return node
+            if node is None:
+                return node
 
         if isinstance(node, list):
             result = []
@@ -118,7 +115,7 @@ class JsonMapper:
         if source_field_name == SPEC_OBJECT_LITERAL:
             field_value = self._get_object_or_array_literal(spec)
         elif source_field_name == SPEC_ARRAY_LITERAL:
-            field_value = self._get_object_or_array_literal(spec, node)
+            field_value = self._get_object_or_array_literal(spec, node, True)
         else:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
@@ -129,12 +126,12 @@ class JsonMapper:
                 field_value = operation(*args)
         return field_value
 
-    def _get_object_or_array_literal(self, spec, node=None):
-        field_value = self.__recalculate_field_value(self.__get_field_value(spec), spec, node)
+    def _get_object_or_array_literal(self, spec, node=None, is_array=False):
+        field_value = self.__recalculate_field_value(self.__get_field_value(spec), spec, node, is_array)
 
         return field_value
 
-    def __recalculate_field_value(self, field_value, spec, node=None):
+    def __recalculate_field_value(self, field_value, spec, node, is_array):
         contains_spec = spec[2] if len(spec) == 3 else False
 
         if len(field_value) == 0:
@@ -143,7 +140,7 @@ class JsonMapper:
         if contains_spec and isinstance(field_value, list):
             for i, item in enumerate(field_value):
                 if node is not None:
-                    field_value[i] = self.map(item, '', node)
+                    field_value[i] = self.map(item, '', node, is_array)
                 else:
                     field_value[i] = self.map(item)
 
