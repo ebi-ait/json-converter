@@ -25,16 +25,17 @@ class JsonMapper:
     def __init__(self, source: dict):
         self.root_node = DataNode(source)
 
-    def map(self, using={}, on='', node=None, is_array=False):
+    def map(self, using={}, on='', node=None, is_output_array=False):
         spec = using
         orig_spec = copy.deepcopy(using)
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
 
-        if not is_array:
+        if not is_output_array:
             node = self.root_node if not anchor else self._anchor_node(anchor)
-            if node is None:
-                return node
+
+        if node is None:
+            return node
 
         if isinstance(node, list):
             result = []
@@ -46,7 +47,7 @@ class JsonMapper:
         else:
             result = self._apply_node_spec(node, anchor, spec)
 
-        if is_array:
+        if is_output_array:
             return result[0] if isinstance(result, list) else result
 
         return result
@@ -127,7 +128,7 @@ class JsonMapper:
                 field_value = operation(*args)
         return field_value
 
-    def _get_object_or_array_literal(self, spec, node=None, is_array=False):
+    def _get_object_or_array_literal(self, spec, node=None, is_output_array=False):
         field_value = self.__get_field_value(spec)
 
         contains_spec = spec[2] if len(spec) == 3 else False
@@ -138,7 +139,7 @@ class JsonMapper:
         if contains_spec and isinstance(field_value, list):
             for i, item in enumerate(field_value):
                 if node is not None:
-                    field_value[i] = self.map(item, '', node, is_array)
+                    field_value[i] = self.map(item, '', node, is_output_array)
                 else:
                     field_value[i] = self.map(item)
 
