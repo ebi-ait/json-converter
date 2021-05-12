@@ -151,6 +151,39 @@ class TestMappingArrays(unittest.TestCase):
         publications_json = JsonMapper(json_object).map(test_spec)
         self.assertEqual(expected_json, publications_json)
 
+    def test_spec_array_with_inner_on_keyword(self):
+        input_json = {
+            "paper": [
+                {
+                    "book_title": "Axioms End",
+                    "book_author": "Lindsay Ellis"
+                },
+                {
+                    "book_title": "The Starless Sea",
+                    "book_author": "Erin Morgenstern"
+                }
+            ],
+            "cd": [
+                {
+                    "cd_name": "Yes Man",
+                    "artist": "Danny Wallace"
+                }
+            ]
+        }
+        spec = {
+            "book": ["$array", {'$on': 'paper', 'title': ['book_title']}, True],
+            "audio": ["$array", {'$on': 'cd', 'title': ['cd_name']}, True]
+        }
+        expected = {
+            "book": [
+                {'title': "Axioms End"},
+                {'title': "The Starless Sea"}
+            ],
+            "audio": [{'title': "Yes Man"}]
+        }
+        result = JsonMapper(input_json).map(spec)
+        self.assertDictEqual(expected, result)
+
     def test_both_source_and_spec_are_array_and_source_contains_arrays(self):
         expected_json = [
             {
