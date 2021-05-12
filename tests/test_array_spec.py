@@ -10,49 +10,6 @@ def array_to_string(*args):
 
 
 class TestMappingArrays(unittest.TestCase):
-    @unittest.skip("not supported yet")
-    def test_source_array_on(self):
-        expected_json = {
-            "authors": ["Stephenson E", "Niel Tyson"]
-        }
-        json_object = {
-            "publications": [
-                {
-                  "author": "Stephenson E"
-                },
-                {
-                    "author": "Niel Tyson"
-                }
-            ]
-        }
-        test_spec = {
-            "$on": "publications",
-            "authors": ["$array", ["author"], True]
-        }
-        authors_json = JsonMapper(json_object).map(test_spec)
-        self.assertDictEqual(expected_json, authors_json)
-
-    @unittest.skip("not supported yet")
-    def test_source_array(self):
-        expected_json = {
-            "authors": ["Stephenson E", "Niel Tyson"]
-        }
-        json_object = {
-            "publications": [
-                {
-                  "author": "Stephenson E"
-                },
-                {
-                    "author": "Niel Tyson"
-                }
-            ]
-        }
-        test_spec = {
-            "authors": ["$array", ["publications.author"], True]
-        }
-        authors_json = JsonMapper(json_object).map(test_spec)
-        self.assertDictEqual(expected_json, authors_json)
-
     def test_spec_array(self):
         expected_json = {
             "attributes": [
