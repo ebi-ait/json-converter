@@ -1,5 +1,10 @@
 import copy
-from collections import Mapping
+import sys
+
+if sys.version_info.minor >= 3:
+    from collections.abc import Mapping
+else:
+    from collections import Mapping
 
 from .data_node import DataNode
 
